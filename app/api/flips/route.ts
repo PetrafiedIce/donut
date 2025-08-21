@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
+import type { Prisma } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 
@@ -18,7 +19,8 @@ export async function GET(req: NextRequest) {
   }
   if (liquidity && ['low', 'ok', 'high'].includes(liquidity)) where.liquidityNote = liquidity
 
-  const orderBy = sort === 'roi' ? { roiPercent: 'desc' } : sort === 'profit' ? { profitPerStack: 'desc' } : { score: 'desc' }
+  const orderBy: Prisma.FlipOpportunityOrderByWithRelationInput =
+    sort === 'roi' ? { roiPercent: 'desc' } : sort === 'profit' ? { profitPerStack: 'desc' } : { score: 'desc' }
 
   const flips = await prisma.flipOpportunity.findMany({
     where,

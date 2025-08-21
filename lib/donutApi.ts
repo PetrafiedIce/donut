@@ -46,6 +46,9 @@ async function fetchWithRetry(path: string, params: Record<string, any> = {}, op
         cache: 'no-store',
       })
       clearTimeout(timeout)
+      if (res.status === 401 || res.status === 403) {
+        throw new Error('Donut API authentication failed. Check DONUT_API_KEY.')
+      }
       if (res.status === 429) {
         const backoff = 500 * attempt
         await sleep(backoff)

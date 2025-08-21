@@ -1,0 +1,9 @@
+{
+  "knownPaths": [
+    "/auctions",
+    "/api/auctions",
+    "/auction",
+    "/market/auctions"
+  ]
+}
+

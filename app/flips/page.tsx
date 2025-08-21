@@ -23,6 +23,8 @@ export default function FlipsPage() {
   const [minProfit, setMinProfit] = useState(0)
   const [q, setQ] = useState('')
   const [liquidity, setLiquidity] = useState<'all'|'low'|'ok'|'high'>('all')
+  const [onlyHighLiquidity, setOnlyHighLiquidity] = useState(false)
+  const [includeReverse, setIncludeReverse] = useState(true)
   const [listingsModal, setListingsModal] = useState<{ title: string, items: any[] } | null>(null)
 
   async function fetchFlips() {
@@ -32,7 +34,7 @@ export default function FlipsPage() {
     params.set('minRoi', String(minRoi))
     params.set('minProfit', String(minProfit))
     if (q) params.set('q', q)
-    if (liquidity !== 'all') params.set('liquidity', liquidity)
+    if (liquidity !== 'all' || onlyHighLiquidity) params.set('liquidity', onlyHighLiquidity ? 'high' : liquidity)
     const res = await fetch('/api/flips?' + params.toString(), { cache: 'no-store' })
     if (!res.ok) { setError('Failed to load flips'); setLoading(false); return }
     const json = await res.json()
@@ -85,6 +87,14 @@ export default function FlipsPage() {
             <option value="ok">OK</option>
             <option value="low">Low</option>
           </select>
+        </div>
+        <div className="flex items-center gap-2">
+          <input id="onlyHigh" type="checkbox" checked={onlyHighLiquidity} onChange={e=>setOnlyHighLiquidity(e.target.checked)} />
+          <label htmlFor="onlyHigh" className="text-sm">Only High Liquidity</label>
+        </div>
+        <div className="flex items-center gap-2">
+          <input id="reverse" type="checkbox" checked={includeReverse} onChange={e=>setIncludeReverse(e.target.checked)} />
+          <label htmlFor="reverse" className="text-sm">Include Reversible (9→1)</label>
         </div>
         <div className="md:col-span-5 flex gap-2">
           <button className="border rounded px-3 py-1" onClick={fetchFlips}>Apply</button>

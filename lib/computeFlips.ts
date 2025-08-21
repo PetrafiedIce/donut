@@ -78,6 +78,35 @@ export async function refreshAuctionsAndComputeFlips() {
     })
   }
 
+  // Optional: reverse flips for 9->1 compressions if profitable
+  for (const recipe of recipes.filter(r => r.isCompress919)) {
+    const reverseInput = grouped[recipe.outputItem] ?? []
+    const reverseOutput = grouped[recipe.inputItem] ?? []
+    const inputCheapest = cheapestStackPrice(reverseInput as any, recipe.outputStackSize)
+    const outputCheapest = cheapestStackPrice(reverseOutput as any, recipe.inputStackSize)
+    if (!inputCheapest || !outputCheapest) continue
+    // Reverse multiplier: 1 block -> 9 items
+    const stacksOut = (recipe.outputStackSize / recipe.outputPerCraft) * (recipe.inputPerCraft / recipe.inputStackSize)
+    const gross = Math.floor(stacksOut * outputCheapest.stackPrice)
+    const profit = gross - inputCheapest.stackPrice
+    const roi = inputCheapest.stackPrice > 0 ? (profit / inputCheapest.stackPrice) * 100 : 0
+    const liquidityNote = (inputCheapest.liquidityNote === 'low' || outputCheapest.liquidityNote === 'low') ? 'low' : (inputCheapest.liquidityNote === 'ok' || outputCheapest.liquidityNote === 'ok') ? 'ok' : 'high'
+    const liquidityFactor = liquidityNote === 'high' ? 1.0 : liquidityNote === 'ok' ? 0.7 : 0.4
+    const score = roi * liquidityFactor
+    opportunitiesData.push({
+      recipeId: recipe.id,
+      inputStackPrice: inputCheapest.stackPrice,
+      outputStackPrice: outputCheapest.stackPrice,
+      stacksOutPerStackIn: stacksOut,
+      grossPerInputStack: gross,
+      profitPerStack: profit,
+      roiPercent: roi,
+      liquidityNote,
+      sampleListings: JSON.stringify({ input: inputCheapest.sampleListingIds, output: outputCheapest.sampleListingIds }),
+      score,
+    })
+  }
+
   await prisma.$transaction(async (tx) => {
     // optional retention policy later
     for (const o of opportunitiesData) {

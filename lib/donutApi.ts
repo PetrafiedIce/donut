@@ -76,6 +76,13 @@ let lastResolveAt = 0
 async function resolveListPath(): Promise<void> {
   const TTL = 60 * 60 * 1000
   if (resolvedListPath && Date.now() - lastResolveAt < TTL) return
+  // Allow env override
+  if (env.DONUT_AUCTIONS_PATH) {
+    resolvedListPath = env.DONUT_AUCTIONS_PATH
+    resolvedEnvelopeKey = (env.DONUT_ENVELOPE_KEY as any) ?? null
+    lastResolveAt = Date.now()
+    return
+  }
   // Try swagger
   const sw = await discoverFromSwagger()
   if (sw?.listPath) {
